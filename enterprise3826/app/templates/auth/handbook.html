@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Handbook — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Handbook{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Operations Handbook</div>
+    <div class="page-subtitle">Руководство по рабочим процедурам проектного контура</div>
+  </div>
+</div>
+
+<div class="card handbook-hero">
+  <div class="card-body" style="padding:24px">
+    <h3 style="margin:0 0 12px 0;font-family:'Playfair Display',serif;font-size:30px;color:var(--gold-primary)">Контур партнёрских согласований</h3>
+    <p style="color:var(--text-secondary);line-height:1.75;margin:0 0 16px 0">
+      Handbook описывает порядок работы с каналами партнёров, процедуру создания приглашений,
+      проверку статусов интеграции и внутренние правила передачи доступа по согласованным кодам.
+    </p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn btn-secondary" href="/partners">Открыть партнёрские каналы</a>
+      <a class="btn btn-ghost" href="/projects">Открыть проекты</a>
+    </div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <div class="card-header"><span class="card-title">Ключевые процедуры</span></div>
+    <div class="card-body">
+      <ul style="margin:0;padding-left:18px;color:var(--text-secondary);line-height:1.8">
+        <li>Создание скрытых проектных контуров.</li>
+        <li>Выдача партнёрских приглашений через канал.</li>
+        <li>Контроль входящих кодов активации.</li>
+        <li>Регламент восстановления доступа к аккаунтам.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Навигация</span></div>
+    <div class="card-body">
+      <p style="color:var(--text-secondary)">Используйте handbook вместе с разделами «Партнёры», «Проекты» и «Восстановление». Все рабочие операции доступны через UI.</p>
+      <a class="btn btn-primary" href="/projects">Перейти в проекты</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Регистрация — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Регистрация{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Новый сотрудник</div>
+    <div class="page-subtitle">Регистрация аккаунта рабочего контура</div>
+  </div>
+</div>
+<div class="card" style="max-width:700px">
+  <div class="card-body">
+    <form method="POST" class="access-form">
+      <div class="grid2">
+        <div class="form-group">
+          <label class="form-label">Логин</label>
+          <input class="form-input" name="username" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" name="email" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ФИО</label>
+        <input class="form-input" name="full_name" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Пароль</label>
+        <input class="form-input" type="password" name="password" required>
+      </div>
+      <button class="btn btn-primary" type="submit">Создать аккаунт</button>
+      <a class="btn btn-ghost" href="/login">Уже есть доступ</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

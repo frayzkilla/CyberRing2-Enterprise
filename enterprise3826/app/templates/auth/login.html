@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Вход — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Вход{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Авторизация</div>
+    <div class="page-subtitle">Вход в корпоративный контур</div>
+  </div>
+</div>
+<div class="card" style="max-width:620px">
+  <div class="card-body">
+    <form method="POST" class="access-form">
+      <div class="form-group">
+        <label class="form-label">Логин</label>
+        <input class="form-input" name="username" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Пароль</label>
+        <input class="form-input" type="password" name="password" required>
+      </div>
+      <button class="btn btn-primary" type="submit">Войти</button>
+      <a class="btn btn-ghost" href="/account/recovery">Восстановление</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

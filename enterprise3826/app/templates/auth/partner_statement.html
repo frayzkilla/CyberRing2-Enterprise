@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Выписка {{ statement.statement_ref }} — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Выписка канала{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Выписка {{ statement.statement_ref }}</div>
+    <div class="page-subtitle">Партнёрское приглашение канала {{ statement.channel }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="/partners">К каналам</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="card-title">Данные согласования</span></div>
+  <div class="card-body">
+    <div class="info-row"><span class="info-label">Канал</span><span class="info-value">{{ statement.channel }}</span></div>
+    <div class="info-row"><span class="info-label">Проект</span><span class="info-value">{{ statement.project_title }}</span></div>
+    <div class="info-row"><span class="info-label">Получатель</span><span class="info-value">{{ statement.recipient_email }}</span></div>
+    <div class="info-row"><span class="info-label">Статус</span><span class="info-value">{{ statement.status }}</span></div>
+    <div class="info-row"><span class="info-label">Код доступа</span><span class="info-value"><code>{{ statement.invite_code }}</code></span></div>
+  </div>
+</div>
+{% endblock %}

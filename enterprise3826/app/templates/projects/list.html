@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Проекты — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Проекты{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Каталог проектов</div>
+    <div class="page-subtitle">Публичные и доступные вам проектные карточки</div>
+  </div>
+  <div class="page-actions">
+    {% if current_user.is_authenticated %}
+    <a href="/project/create" class="btn btn-primary">Новый проект</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <input class="form-input" type="text" name="search" value="{{ search }}" placeholder="Поиск по названию или описанию" style="flex:1;min-width:260px">
+      <button class="btn btn-secondary" type="submit">Найти</button>
+      {% if search %}
+      <a class="btn btn-ghost" href="/projects">Сброс</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body" style="padding:0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Название</th>
+          <th>Описание</th>
+          <th>Формат</th>
+          <th>Владелец</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for p in projects %}
+        <tr>
+          <td>#{{ p.id }}</td>
+          <td>{{ p.title }}</td>
+          <td>{{ (p.summary or '')[:120] }}</td>
+          <td>{% if p.is_hidden %}<span class="status-pill pending">hidden</span>{% else %}<span class="status-pill approved">public</span>{% endif %}</td>
+          <td>{{ p.owner.username }}</td>
+          <td><a class="btn btn-sm" href="/project/{{ p.id }}">Открыть</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">Нет проектов по заданному фильтру.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

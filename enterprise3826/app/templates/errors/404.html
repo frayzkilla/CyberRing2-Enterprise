@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}404 — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Ошибка 404{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Ошибка 404</div>
+    <div class="page-subtitle">Ресурс не найден</div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-body" style="text-align:center;padding:42px 20px">
+    <div class="stat-value" style="font-size:72px;color:var(--gold-primary);line-height:1">404</div>
+    <p style="margin:14px 0;color:var(--text-secondary)">Запрошенная страница отсутствует или перемещена.</p>
+    <a href="/" class="btn btn-secondary">← На главную</a>
+  </div>
+</div>
+{% endblock %}

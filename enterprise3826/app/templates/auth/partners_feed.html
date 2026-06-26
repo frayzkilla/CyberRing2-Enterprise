@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Лента канала {{ channel.name }} — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Лента канала{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Канал {{ channel.name }}</div>
+    <div class="page-subtitle">Сектор: {{ channel.sector }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="/partners">Назад к каналам</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="GET" action="{{ url_for('partners_feed', channel_id=channel.id) }}" class="access-form">
+      <div class="form-group">
+        <label class="form-label">Поиск по журналу</label>
+        <input class="form-input" name="search" value="{{ search }}" placeholder="проект, получатель, код">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Статус</label>
+        <select class="form-select" name="status">
+          <option value="" {% if not status_filter %}selected{% endif %}>Все</option>
+          <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>pending</option>
+          <option value="accepted" {% if status_filter == 'accepted' %}selected{% endif %}>accepted</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <button class="btn btn-secondary" type="submit">Применить</button>
+        <a class="btn btn-ghost" href="{{ url_for('partners_feed', channel_id=channel.id) }}">Сброс</a>
+      </div>
+    </form>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span class="status-pill pending">Найдено: {{ total }}</span>
+      <span class="status-pill approved">Страница {{ page }} / {{ pages }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body" style="padding:0">
+    <table class="data-table">
+      <thead><tr><th>Запись</th><th>Проект</th><th>Выписка</th><th>Код доступа</th><th>Получатель</th><th>Статус</th><th>Создано</th></tr></thead>
+      <tbody>
+      {% for row in feed %}
+        <tr{% if row.is_redacted %} class="muted-row"{% endif %}>
+          <td>{{ row.display_id }}</td>
+          <td>{{ row.project_name }}</td>
+          <td>
+            {% if row.statement_url %}
+              <a class="btn btn-sm" href="{{ row.statement_url }}">{{ row.statement_ref }}</a>
+            {% else %}
+              {{ row.statement_ref }}
+            {% endif %}
+          </td>
+          <td><code>{{ row.invite_code }}</code></td>
+          <td>{{ row.recipient_email }}</td>
+          <td>{{ row.status }}</td>
+          <td>{{ row.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7">Данных нет</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if pages > 1 %}
+<div class="card">
+  <div class="card-body" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+    {% if page > 1 %}
+      <a class="btn btn-ghost" href="{{ url_for('partners_feed', channel_id=channel.id, search=search, status=status_filter, page=page-1) }}">Назад</a>
+    {% else %}
+      <span></span>
+    {% endif %}
+    <span class="form-label" style="margin:0">Страница {{ page }} из {{ pages }}</span>
+    {% if page < pages %}
+      <a class="btn btn-ghost" href="{{ url_for('partners_feed', channel_id=channel.id, search=search, status=status_filter, page=page+1) }}">Вперед</a>
+    {% else %}
+      <span></span>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header"><span class="card-title">Активация партнёрского доступа</span></div>
+  <div class="card-body">
+    <form method="POST" action="/invites/accept" class="access-form">
+      <div class="form-group">
+        <label class="form-label">Код доступа</label>
+        <input class="form-input" name="invite_code" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Режим синхронизации</label>
+        <input class="form-input" value="Стандартный" disabled>
+        <input type="hidden" name="activation_mode" value="standard">
+      </div>
+      <button type="submit" class="btn btn-primary">Активировать</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

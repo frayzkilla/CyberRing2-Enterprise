@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}500 — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Ошибка 500{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Ошибка 500</div>
+    <div class="page-subtitle">Внутренняя ошибка сервера</div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-body" style="text-align:center;padding:42px 20px">
+    <div class="stat-value" style="font-size:72px;color:#ff9b9b;line-height:1">500</div>
+    <p style="margin:14px 0;color:var(--text-secondary)">Сервер не смог обработать запрос. Повтори позже.</p>
+    <a href="/" class="btn btn-secondary">← На главную</a>
+  </div>
+</div>
+{% endblock %}

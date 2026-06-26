@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Предприятие 3826 — Главная{% endblock %}
+{% block breadcrumb %}Главная{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Предприятие 3826</div>
+    <div class="page-subtitle">Корпоративный контур проектного управления</div>
+  </div>
+  <div class="page-actions">
+    {% if current_user.is_authenticated %}
+      <a href="/dashboard" class="btn btn-primary">Кабинет</a>
+      <a href="/project/create" class="btn btn-secondary">Новый проект</a>
+    {% else %}
+      <a href="/login" class="btn btn-primary">Войти</a>
+      <a href="/register" class="btn btn-secondary">Регистрация</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card red">
+    <div class="stat-icon">◆</div>
+    <div class="stat-value">{{ projects|length }}</div>
+    <div class="stat-label">Публичные проекты</div>
+    <div class="stat-decoration">CY</div>
+  </div>
+  <div class="stat-card gold">
+    <div class="stat-icon">⚿</div>
+    <div class="stat-value">OPS</div>
+    <div class="stat-label">Режим сервиса</div>
+    <div class="stat-decoration">NET</div>
+  </div>
+  <div class="stat-card cyan">
+    <div class="stat-icon">▣</div>
+    <div class="stat-value">RU</div>
+    <div class="stat-label">Локализация</div>
+    <div class="stat-decoration">RU</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Публичная витрина проектов</span>
+  </div>
+  <div class="card-body" style="padding:0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Название</th>
+          <th>Описание</th>
+          <th>Владелец</th>
+          <th>Действие</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for p in projects %}
+        <tr>
+          <td>#{{ p.id }}</td>
+          <td>{{ p.title }}</td>
+          <td>{{ (p.summary or '')[:90] }}</td>
+          <td>{{ p.owner.username }}</td>
+          <td><a class="btn btn-sm" href="/project/{{ p.id }}">Открыть</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">Пока нет проектов в публичной витрине.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

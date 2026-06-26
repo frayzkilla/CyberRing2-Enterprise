@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Скрытые проекты — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Скрытые проекты{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Скрытые проекты</div>
+    <div class="page-subtitle">Доступно роли EXEC</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body" style="padding:0">
+    <table class="data-table">
+      <thead><tr><th>ID</th><th>Название</th><th>Владелец</th><th>Обновлено</th><th></th></tr></thead>
+      <tbody>
+      {% for p in projects %}
+        <tr>
+          <td>#{{ p.id }}</td>
+          <td>{{ p.title }}</td>
+          <td>{{ p.owner.username }}</td>
+          <td>{{ p.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td><a class="btn btn-sm" href="/project/{{ p.id }}">Открыть</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">Скрытых проектов нет.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

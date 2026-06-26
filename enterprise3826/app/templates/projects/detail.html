@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}{{ project.title }} — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Карточка проекта{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">#{{ project.id }} · {{ project.title }}</div>
+    <div class="page-subtitle">Детальная карточка рабочего контура</div>
+  </div>
+</div>
+
+<div class="stats-grid" style="margin-bottom:16px">
+  <div class="stat-card red">
+    <div class="stat-icon">◆</div>
+    <div class="stat-value">{{ project.id }}</div>
+    <div class="stat-label">ID проекта</div>
+    <div class="stat-decoration">ID</div>
+  </div>
+  <div class="stat-card gold">
+    <div class="stat-icon">▣</div>
+    <div class="stat-value">{% if project.is_hidden %}HIDDEN{% else %}PUBLIC{% endif %}</div>
+    <div class="stat-label">Режим</div>
+    <div class="stat-decoration">MODE</div>
+  </div>
+  <div class="stat-card cyan">
+    <div class="stat-icon">👤</div>
+    <div class="stat-value">{{ project.owner.username }}</div>
+    <div class="stat-label">Владелец</div>
+    <div class="stat-decoration">OWN</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-icon">⏱</div>
+    <div class="stat-value">{{ project.updated_at.strftime('%d.%m %H:%M') }}</div>
+    <div class="stat-label">Обновлён</div>
+    <div class="stat-decoration">TIME</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Описание</span></div>
+      <div class="card-body"><p style="white-space:pre-wrap">{{ project.summary }}</p></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Секретные заметки</span></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        {% for n in notes %}
+          <div class="comment-item">
+            <div class="comment-header">
+              <div class="comment-author"><div class="comment-author-avatar">✎</div><span class="comment-author-name">{{ n.title }}</span></div>
+              <span class="comment-date">{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            <div class="comment-text">{{ n.body_text }}</div>
+          </div>
+        {% else %}
+          <p style="color:var(--text-secondary)">Записей нет.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Файлы проекта</span></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        {% for f in files %}
+          <div class="comment-item">
+            <div class="comment-header">
+              <div class="comment-author"><div class="comment-author-avatar">▣</div><span class="comment-author-name">{{ f.filename }}</span></div>
+              <span class="comment-date">{{ f.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            <div class="comment-text">{{ f.content_text }}</div>
+          </div>
+        {% else %}
+          <p style="color:var(--text-secondary)">Файлов пока нет.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div>
+    {% if can_manage %}
+    <div class="card">
+      <div class="card-header"><span class="card-title">Добавить заметку</span></div>
+      <div class="card-body">
+        <form class="access-form" method="POST" action="/project/{{ project.id }}/note">
+          <div class="form-group"><label class="form-label">Заголовок</label><input class="form-input" name="title"></div>
+          <div class="form-group"><label class="form-label">Текст</label><textarea class="form-textarea" rows="3" name="body"></textarea></div>
+          <button class="btn btn-secondary" type="submit">Добавить</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Добавить файл</span></div>
+      <div class="card-body">
+        <form class="access-form" method="POST" action="/project/{{ project.id }}/file">
+          <div class="form-group"><label class="form-label">Имя файла</label><input class="form-input" name="filename" placeholder="flag.txt"></div>
+          <div class="form-group"><label class="form-label">Содержимое</label><textarea class="form-textarea" rows="3" name="content"></textarea></div>
+          <button class="btn btn-secondary" type="submit">Прикрепить</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Партнёрское приглашение</span></div>
+      <div class="card-body">
+        <form class="access-form" method="POST" action="/project/{{ project.id }}/invite">
+          <div class="form-group"><label class="form-label">Email партнёра</label><input class="form-input" name="recipient_email" required></div>
+          <div class="form-group">
+            <label class="form-label">Канал</label>
+            <select class="form-select" name="channel_id" required>
+              {% for c in channels %}
+                <option value="{{ c.id }}">#{{ c.id }} · {{ c.name }} ({{ c.sector }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="btn btn-secondary" type="submit">Создать приглашение</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Выданные приглашения</span></div>
+      <div class="card-body" style="padding:0">
+        <table class="data-table">
+          <thead><tr><th>ID</th><th>Канал</th><th>Выписка</th><th>Код</th><th>Статус</th></tr></thead>
+          <tbody>
+          {% for i in invites %}
+            <tr>
+              <td>#{{ i.id }}</td>
+              <td>{{ i.channel.name }}</td>
+              <td><a class="btn btn-sm" href="{{ url_for('partner_invite_statement', statement_ref='INV-%06d'|format(i.id)) }}">INV-{{ '%06d'|format(i.id) }}</a></td>
+              <td><code>{{ i.invite_code }}</code></td>
+              <td>{{ i.status }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5">Приглашений нет</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Активировать код приглашения</span></div>
+      <div class="card-body">
+        <form method="POST" action="/invites/accept" class="access-form">
+          <div class="form-group"><label class="form-label">Invite code</label><input class="form-input" name="invite_code" required></div>
+          <div class="form-group">
+            <label class="form-label">Режим синхронизации</label>
+            <input class="form-input" value="Стандартный" disabled>
+            <input type="hidden" name="activation_mode" value="standard">
+          </div>
+          <button type="submit" class="btn btn-primary">Активировать доступ</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Выданные гранты</span></div>
+      <div class="card-body" style="padding:0">
+        <table class="data-table">
+          <thead><tr><th>ID</th><th>User ID</th><th>Источник</th><th>Время</th></tr></thead>
+          <tbody>
+          {% for g in grants %}
+            <tr><td>#{{ g.id }}</td><td>{{ g.user_id }}</td><td>{{ g.source }}</td><td>{{ g.created_at.strftime('%Y-%m-%d %H:%M') }}</td></tr>
+          {% else %}
+            <tr><td colspan="4">Нет выданных грантов</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

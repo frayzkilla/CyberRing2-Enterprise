@@ -1,0 +1,69 @@
+.alert {
+  padding: 12px 14px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  background: rgba(26, 26, 46, 0.85);
+}
+
+.alert-success {
+  border-color: rgba(0, 204, 102, 0.45);
+  color: #8be3ad;
+}
+
+.alert-danger {
+  border-color: rgba(255, 51, 51, 0.45);
+  color: #ff9b9b;
+}
+
+.alert-warning {
+  border-color: rgba(201, 168, 76, 0.45);
+  color: #f1d992;
+}
+
+.alert-info {
+  border-color: rgba(0, 170, 204, 0.45);
+  color: #91d8e8;
+}
+
+.btn-danger {
+  border-color: #cc2200;
+  color: #ff7663;
+}
+
+.btn-danger:hover {
+  background: #cc2200;
+  color: #fff7ef;
+}
+
+.btn-purple {
+  border-color: #7e5cf2;
+  color: #b3a5ff;
+}
+
+.btn-purple:hover {
+  background: #7e5cf2;
+  color: #fff;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+pre {
+  background: rgba(10, 10, 18, 0.9);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  color: #e8d5a3;
+  overflow: auto;
+}
+
+@media (max-width: 900px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+}

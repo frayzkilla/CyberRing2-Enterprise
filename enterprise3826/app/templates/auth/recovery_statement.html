@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Дело {{ statement.case_ref }} — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Выписка восстановления{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Дело {{ statement.case_ref }}</div>
+    <div class="page-subtitle">Выписка по восстановлению доступа</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="/account/recovery">К восстановлению</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="card-title">Резолюция</span></div>
+  <div class="card-body">
+    <div class="info-row"><span class="info-label">Аккаунт</span><span class="info-value">{{ statement.username }}</span></div>
+    <div class="info-row"><span class="info-label">Статус</span><span class="info-value">{{ statement.status }}</span></div>
+    <div class="info-row"><span class="info-label">Создано</span><span class="info-value">{{ statement.created_at }}</span></div>
+    <div class="info-row"><span class="info-label">Действует до</span><span class="info-value">{{ statement.expires_at }}</span></div>
+    <div class="info-row"><span class="info-label">Код резолюции</span><span class="info-value"><code>{{ statement.resolution_code }}</code></span></div>
+  </div>
+</div>
+{% endblock %}

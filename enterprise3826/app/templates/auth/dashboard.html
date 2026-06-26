@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Кабинет — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Кабинет{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Кабинет сотрудника</div>
+    <div class="page-subtitle">Рабочий профиль и быстрый доступ к разделам</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-secondary" href="/project/create">Создать проект</a>
+    <a class="btn btn-ghost" href="/projects">Каталог проектов</a>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card red">
+    <div class="stat-icon">👤</div>
+    <div class="stat-value">{{ current_user.username }}</div>
+    <div class="stat-label">Текущий профиль</div>
+    <div class="stat-decoration">ACC</div>
+  </div>
+  <div class="stat-card gold">
+    <div class="stat-icon">⚿</div>
+    <div class="stat-value">{{ current_user.role_code }}</div>
+    <div class="stat-label">Роль</div>
+    <div class="stat-decoration">ROLE</div>
+  </div>
+  <div class="stat-card cyan">
+    <div class="stat-icon">◆</div>
+    <div class="stat-value">{{ own_projects }}</div>
+    <div class="stat-label">Собственные проекты</div>
+    <div class="stat-decoration">OWN</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-icon">⬢</div>
+    <div class="stat-value">{{ granted_projects }}</div>
+    <div class="stat-label">Выданные доступы</div>
+    <div class="stat-decoration">GRANT</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <div class="card-header"><span class="card-title">Профиль</span></div>
+    <div class="card-body">
+      <div class="info-row"><span class="info-label">Логин</span><span class="info-value">{{ current_user.username }}</span></div>
+      <div class="info-row"><span class="info-label">Имя</span><span class="info-value">{{ current_user.full_name }}</span></div>
+      <div class="info-row"><span class="info-label">Email</span><span class="info-value">{{ current_user.email }}</span></div>
+      <div class="info-row"><span class="info-label">Роль</span><span class="info-value">{{ current_user.role_label }}</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Операции</span></div>
+    <div class="card-body">
+      <p style="color:var(--text-secondary)">Скрытые проекты доступны владельцу или роли EXEC. Партнёрские каналы и handbook доступны из навигации.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a href="/partners" class="btn btn-secondary">Партнёры</a>
+        <a href="/notebook" class="btn btn-secondary">Блокнот</a>
+        <a href="/handbook" class="btn btn-secondary">Handbook</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

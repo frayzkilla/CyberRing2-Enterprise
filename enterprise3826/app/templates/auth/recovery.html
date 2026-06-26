@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Восстановление — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Восстановление{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Восстановление аккаунта</div>
+    <div class="page-subtitle">Сервис обработки запросов на смену пароля</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <div class="card-header"><span class="card-title">Шаг 1 · Запрос</span></div>
+    <div class="card-body">
+      <form method="POST" action="/account/recovery" class="access-form">
+        <div class="form-group"><label class="form-label">Логин</label><input class="form-input" name="username" required></div>
+        <button type="submit" class="btn btn-secondary">Отправить запрос</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Шаг 2 · Подтверждение</span></div>
+    <div class="card-body">
+      <form method="POST" action="/account/recovery/confirm" class="access-form">
+        <div class="form-group"><label class="form-label">Логин</label><input class="form-input" name="username" required></div>
+        <div class="form-group"><label class="form-label">Номер дела</label><input class="form-input" name="case_ref" placeholder="REC-000001" required></div>
+        <div class="form-group"><label class="form-label">Код резолюции</label><input class="form-input" name="resolution_code" required></div>
+        <div class="form-group"><label class="form-label">Новый пароль</label><input class="form-input" name="new_password" type="password" required></div>
+        <button type="submit" class="btn btn-primary">Применить</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% if current_user.is_authenticated %}
+<div class="grid2" style="margin-top:20px">
+  <div class="card">
+    <div class="card-header"><span class="card-title">Журнал заявок</span></div>
+    <div class="card-body">
+      <form method="GET" action="/account/recovery/audit" class="access-form">
+        <div class="form-group"><label class="form-label">Поиск</label><input class="form-input" name="search" placeholder="логин, email, ФИО"></div>
+        <div class="form-group">
+          <label class="form-label">Статус</label>
+          <select class="form-select" name="status">
+            <option value="">Все</option>
+            <option value="approved">approved</option>
+            <option value="used">used</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-secondary">Открыть сводку</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Выписка по делу</span></div>
+    <div class="card-body">
+      <form method="GET" action="/account/recovery/cases/REC-000001/statement" class="access-form" onsubmit="this.action='/account/recovery/cases/'+this.case_ref.value+'/statement'">
+        <div class="form-group"><label class="form-label">Номер дела</label><input class="form-input" name="case_ref" placeholder="REC-000001" required></div>
+        <button type="submit" class="btn btn-secondary">Открыть выписку</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:20px">
+  <div class="card-header"><span class="card-title">Мои заявки</span></div>
+  <div class="card-body" style="padding:0">
+    <table class="data-table">
+      <thead><tr><th>Номер</th><th>Статус</th><th>Создано</th><th>Истекает</th></tr></thead>
+      <tbody>
+      {% for ticket in own_tickets %}
+        <tr>
+          <td>REC-{{ '%06d'|format(ticket.id) }}</td>
+          <td>{{ ticket.status }}</td>
+          <td>{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>{{ ticket.expires_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4">Заявок нет</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

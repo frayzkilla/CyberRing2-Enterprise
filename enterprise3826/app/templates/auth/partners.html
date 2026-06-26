@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Партнёры — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Партнёрские каналы{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Партнёрские каналы</div>
+    <div class="page-subtitle">Контуры взаимодействия с внешними контрагентами</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body" style="padding:0">
+    <table class="data-table">
+      <thead><tr><th>ID</th><th>Канал</th><th>Сектор</th><th>Лента</th></tr></thead>
+      <tbody>
+      {% for c in channels %}
+        <tr>
+          <td>#{{ c.id }}</td>
+          <td>{{ c.name }}</td>
+          <td>{{ c.sector }}</td>
+          <td><a class="btn btn-sm" href="/partners/channel/{{ c.id }}/feed">Открыть</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

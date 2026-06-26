@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}403 — Предприятие 3826{% endblock %}
+{% block breadcrumb %}Ошибка 403{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div class="page-title">Ошибка 403</div>
+    <div class="page-subtitle">Доступ запрещён</div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-body" style="text-align:center;padding:42px 20px">
+    <div class="stat-value" style="font-size:72px;color:#ff7663;line-height:1">403</div>
+    <p style="margin:14px 0;color:var(--text-secondary)">Недостаточно прав для просмотра этой страницы.</p>
+    <a href="/" class="btn btn-secondary">← На главную</a>
+  </div>
+</div>
+{% endblock %}
