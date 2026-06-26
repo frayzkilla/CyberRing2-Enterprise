@@ -59,7 +59,11 @@ app = Flask(
     template_folder=str(BASE_DIR / 'app' / 'templates'),
     static_folder=str(BASE_DIR / 'app' / 'static'),
 )
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'cybernet-session-key')
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise RuntimeError('SECRET_KEY is required')
+app.config['SECRET_KEY'] = SECRET_KEY
+app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_FILE_SIZE', str(1024 * 1024)))
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
     'DATABASE_URL',
     'postgresql://postgres:postgres@localhost:5432/cybernet',
@@ -86,9 +90,51 @@ login_manager.login_view = 'login'
 login_manager.login_message = 'Требуется авторизация'
 login_manager.login_message_category = 'warning'
 
+RATE_LIMIT_STATE = {}
+
 
 def ensure_runtime_dirs():
     LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def get_client_ip():
+    return request.remote_addr if has_request_context() else ''
+
+
+def check_rate_limit(scope, identity, limit=10, window_seconds=60):
+    now = datetime.utcnow()
+    key = (scope, identity or 'anonymous')
+    window_start = now - timedelta(seconds=window_seconds)
+    attempts = [ts for ts in RATE_LIMIT_STATE.get(key, []) if ts > window_start]
+    if len(attempts) >= limit:
+        RATE_LIMIT_STATE[key] = attempts
+        return False
+    attempts.append(now)
+    RATE_LIMIT_STATE[key] = attempts
+    return True
+
+
+def require_rate_limit(scope, identity=None, limit=10, window_seconds=60):
+    identity_value = identity or get_client_ip()
+    if not check_rate_limit(scope, identity_value, limit, window_seconds):
+        log_event('rate_limit', status='failed', details={'scope': scope, 'identity': identity_value})
+        abort(429)
+
+
+def csrf_token():
+    token = session.get('_csrf_token')
+    if not token:
+        token = secrets.token_urlsafe(32)
+        session['_csrf_token'] = token
+    return token
+
+
+def validate_csrf():
+    expected = session.get('_csrf_token')
+    supplied = request.form.get('_csrf_token') or request.headers.get('X-CSRF-Token')
+    if not expected or not supplied or not secrets.compare_digest(expected, supplied):
+        log_event('csrf.validation', status='failed')
+        abort(403)
 
 
 def log_event(event_type, status='success', details=None, username=None):
@@ -106,7 +152,7 @@ def log_event(event_type, status='success', details=None, username=None):
         'user': actor,
         'route': request.path if has_request_context() else '',
         'method': request.method if has_request_context() else '',
-        'remote_addr': request.headers.get('X-Forwarded-For', request.remote_addr) if has_request_context() else '',
+        'remote_addr': get_client_ip(),
         'details': details or {},
     }
     with APP_LOG_PATH.open('a', encoding='utf-8') as fh:
@@ -584,7 +630,7 @@ def seed_demo():
             role_code=role,
             is_admin=False,
         )
-        user.set_password('DemoPass!2026')
+        user.set_password(random_token(24))
         db.session.add(user)
         demo_users.append(user)
 
@@ -647,7 +693,14 @@ def seed_demo():
 def inject_runtime():
     return {
         'role_labels': ROLE_LABELS,
+        'csrf_token': csrf_token,
     }
+
+
+@app.before_request
+def enforce_csrf_for_forms():
+    if request.method == 'POST' and not request.path.startswith('/api/'):
+        validate_csrf()
 
 
 @app.route('/api/health')
@@ -656,7 +709,10 @@ def api_health():
 
 
 @app.route('/api/status')
+@login_required
 def api_status():
+    if not current_user.is_authenticated or current_user.role_code != ROLE_EXEC:
+        abort(403)
     return jsonify({
         'users': User.query.count(),
         'projects': Project.query.count(),
@@ -676,6 +732,7 @@ def register():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     if request.method == 'POST':
+        require_rate_limit('register', get_client_ip(), limit=5, window_seconds=300)
         username = request.form.get('username', '').strip()
         email = request.form.get('email', '').strip().lower()
         full_name = request.form.get('full_name', '').strip()
@@ -684,6 +741,10 @@ def register():
         if not username or not email or not full_name or not password:
             log_event('auth.register', status='failed', details={'reason': 'validation'})
             flash('Заполните все поля', 'danger')
+            return render_template('auth/register.html')
+        if len(password) < 12 or len(username) > 64 or len(email) > 128 or len(full_name) > 128:
+            log_event('auth.register', status='failed', details={'reason': 'validation_limits'})
+            flash('Проверьте длину полей и используйте пароль не короче 12 символов', 'danger')
             return render_template('auth/register.html')
         if User.query.filter_by(username=username).first():
             log_event('auth.register', status='failed', details={'reason': 'username_exists', 'username': username})
@@ -716,6 +777,7 @@ def login():
         return redirect(url_for('dashboard'))
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
+        require_rate_limit('login', f'{get_client_ip()}:{username}', limit=8, window_seconds=300)
         password = request.form.get('password', '').strip()
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
@@ -779,6 +841,9 @@ def project_create():
         summary = request.form.get('summary', '').strip()
         is_hidden = request.form.get('is_hidden') == 'on'
 
+        if len(title) > 180 or len(summary) > 4000:
+            flash('Превышена допустимая длина полей', 'danger')
+            return render_template('projects/create.html')
         if not title:
             flash('Название обязательно', 'danger')
             return render_template('projects/create.html')
@@ -807,8 +872,12 @@ def project_detail(project_id):
 
     notes = ProjectNote.query.filter_by(project_id=project.id).order_by(ProjectNote.created_at.desc()).all()
     files = ProjectFile.query.filter_by(project_id=project.id).order_by(ProjectFile.created_at.desc()).all()
-    invites = ProjectInvite.query.filter_by(project_id=project.id).order_by(ProjectInvite.created_at.desc()).all()
-    grants = ProjectGrant.query.filter_by(project_id=project.id).order_by(ProjectGrant.created_at.desc()).all()
+    if can_manage_project(current_user, project):
+        invites = ProjectInvite.query.filter_by(project_id=project.id).order_by(ProjectInvite.created_at.desc()).all()
+        grants = ProjectGrant.query.filter_by(project_id=project.id).order_by(ProjectGrant.created_at.desc()).all()
+    else:
+        invites = []
+        grants = []
     channels = PartnerChannel.query.order_by(PartnerChannel.id.asc()).all()
 
     decoded_notes = []
@@ -852,6 +921,9 @@ def project_add_note(project_id):
 
     title = request.form.get('title', '').strip() or 'Служебная заметка'
     body = request.form.get('body', '').strip()
+    if len(title) > 180 or len(body) > 64000:
+        flash('Превышена допустимая длина заметки', 'danger')
+        return redirect(url_for('project_detail', project_id=project.id))
     if not body:
         flash('Текст заметки пустой', 'danger')
         return redirect(url_for('project_detail', project_id=project.id))
@@ -879,6 +951,9 @@ def project_add_file(project_id):
 
     filename = request.form.get('filename', '').strip() or f'payload_{random_token(6)}.txt'
     content = request.form.get('content', '').strip()
+    if len(filename) > 180 or len(content) > 64000:
+        flash('Превышена допустимая длина файла', 'danger')
+        return redirect(url_for('project_detail', project_id=project.id))
     if not content:
         flash('Содержимое файла пустое', 'danger')
         return redirect(url_for('project_detail', project_id=project.id))
@@ -908,7 +983,7 @@ def project_create_invite(project_id):
     channel_id = request.form.get('channel_id', type=int)
     channel = PartnerChannel.query.get(channel_id) if channel_id else None
 
-    if not recipient_email or not channel:
+    if len(recipient_email) > 180 or not recipient_email or not channel:
         flash('Укажите email и канал', 'danger')
         return redirect(url_for('project_detail', project_id=project.id))
 
@@ -929,6 +1004,7 @@ def project_create_invite(project_id):
 @app.route('/invites/accept', methods=['POST'])
 @login_required
 def invites_accept():
+    require_rate_limit('invite_accept', f'{get_client_ip()}:{current_user.id}', limit=10, window_seconds=300)
     invite_code = request.form.get('invite_code', '').strip()
 
     invite = ProjectInvite.query.filter(
@@ -939,6 +1015,10 @@ def invites_accept():
         log_event('invite.accept', status='failed', details={'reason': 'invalid_code'})
         flash('Код не найден или уже использован', 'danger')
         return redirect(url_for('projects_list'))
+
+    if invite.recipient_email.lower() != current_user.email.lower() and current_user.role_code != ROLE_EXEC:
+        log_event('invite.accept', status='failed', details={'reason': 'recipient_mismatch', 'invite_id': invite.id})
+        abort(403)
 
     granted_count = 0
     if add_project_grant_if_missing(current_user.id, invite.project_id, 'partner_invite'):
@@ -995,7 +1075,7 @@ def partners_feed(channel_id):
 
     feed = []
     for idx, item in enumerate(rows):
-        can_see_project = can_view_project(current_user, item.project)
+        can_see_project = can_manage_project(current_user, item.project)
         display_index = (page - 1) * per_page + idx + 1
         feed.append({
             'display_id': f'#{item.id}' if can_see_project else f'строка {display_index}',
@@ -1029,6 +1109,8 @@ def partner_invite_statement(statement_ref):
         abort(404)
     invite = ProjectInvite.query.get_or_404(invite_id)
     project = Project.query.get_or_404(invite.project_id)
+    if not can_manage_project(current_user, project):
+        abort(403)
     log_event('invite.statement.view', details={'invite_id': invite.id, 'project_id': project.id})
     payload = {
         'statement_ref': case_ref('INV', invite.id),
@@ -1052,6 +1134,9 @@ def notebook():
     if request.method == 'POST' and request.form.get('action') == 'create':
         title = request.form.get('title', '').strip() or 'Запись'
         body = request.form.get('body', '').strip()
+        if len(title) > 180 or len(body) > 64000:
+            flash('Превышена допустимая длина записи', 'danger')
+            return redirect(url_for('notebook'))
         if not body:
             flash('Текст записи не может быть пустым', 'danger')
             return redirect(url_for('notebook'))
@@ -1071,6 +1156,7 @@ def notebook():
 def recovery_page():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
+        require_rate_limit('recovery_request', f'{get_client_ip()}:{username}', limit=5, window_seconds=300)
         user = User.query.filter_by(username=username).first()
         if user:
             ticket = RecoveryTicket(
@@ -1102,6 +1188,8 @@ def recovery_page():
 @app.route('/account/recovery/audit')
 @login_required
 def recovery_audit():
+    if current_user.role_code != ROLE_EXEC:
+        abort(403)
     search = request.args.get('search', '').strip()
     status_filter = request.args.get('status', '').strip().lower()
     query = RecoveryTicket.query.join(User, RecoveryTicket.user_id == User.id)
@@ -1134,6 +1222,8 @@ def recovery_case_statement(case_reference):
     if not ticket_id:
         abort(404)
     ticket = RecoveryTicket.query.get_or_404(ticket_id)
+    if ticket.user_id != current_user.id and current_user.role_code != ROLE_EXEC:
+        abort(403)
     user = User.query.get_or_404(ticket.user_id)
     log_event('recovery.statement.view', details={'case_ref': case_ref('REC', ticket.id), 'target_user': user.username})
     payload = {
@@ -1141,7 +1231,6 @@ def recovery_case_statement(case_reference):
         'username': user.username,
         'account_id': user.id,
         'status': ticket.status,
-        'resolution_code': ticket.token,
         'created_at': ticket.created_at.isoformat(),
         'expires_at': ticket.expires_at.isoformat(),
     }
@@ -1153,20 +1242,21 @@ def recovery_case_statement(case_reference):
 @app.route('/account/recovery/confirm', methods=['POST'])
 def recovery_confirm():
     username = request.form.get('username', '').strip()
+    require_rate_limit('recovery_confirm', f'{get_client_ip()}:{username}', limit=5, window_seconds=300)
     case_reference = request.form.get('case_ref', '').strip()
     ticket_id = parse_case_ref(case_reference, 'REC')
     resolution_code = request.form.get('resolution_code', '').strip()
     new_password = request.form.get('new_password', '').strip()
 
-    if not username or not ticket_id or not resolution_code or not new_password:
+    if not username or not ticket_id or not resolution_code or not new_password or len(new_password) < 12:
         log_event('recovery.confirm', status='failed', details={'reason': 'validation'})
-        flash('Заполните все поля подтверждения', 'danger')
+        flash('Заполните все поля подтверждения и используйте пароль не короче 12 символов', 'danger')
         return redirect(url_for('recovery_page'))
 
     ticket = RecoveryTicket.query.filter_by(id=ticket_id, token=resolution_code, status='approved').first()
     user = User.query.filter_by(username=username).first()
 
-    if not ticket or ticket.expires_at < datetime.utcnow() or not user:
+    if not ticket or ticket.expires_at < datetime.utcnow() or not user or ticket.user_id != user.id:
         log_event('recovery.confirm', status='failed', details={'username': username, 'reason': 'invalid_ticket'})
         flash('Подтверждение отклонено', 'danger')
         return redirect(url_for('recovery_page'))
@@ -1205,6 +1295,8 @@ def api_projects_create():
     summary = (data.get('summary') or '').strip()
     is_hidden = bool(data.get('is_hidden', True))
 
+    if len(title) > 180 or len(summary) > 4000:
+        return jsonify({'error': 'field too large'}), 413
     if not title:
         return jsonify({'error': 'title is required'}), 400
 
@@ -1245,6 +1337,8 @@ def api_project_note_create(project_id):
     title = (data.get('title') or '').strip() or 'Secret Note'
     body = (data.get('body') or data.get('body_b64') or '').strip()
 
+    if len(title) > 180 or len(body) > 64000:
+        return jsonify({'error': 'field too large'}), 413
     if not body:
         return jsonify({'error': 'body is required'}), 400
 
@@ -1288,6 +1382,8 @@ def api_project_file_create(project_id):
     filename = (data.get('filename') or '').strip() or f'payload_{random_token(6)}.txt'
     content = (data.get('content') or data.get('content_b64') or '').strip()
 
+    if len(filename) > 180 or len(content) > 64000:
+        return jsonify({'error': 'field too large'}), 413
     if not content:
         return jsonify({'error': 'content is required'}), 400
 
@@ -1332,7 +1428,7 @@ def api_project_invite_create(project_id):
     channel_id = int(data.get('channel_id') or 0)
     channel = PartnerChannel.query.get(channel_id)
 
-    if not recipient_email or not channel:
+    if len(recipient_email) > 180 or not recipient_email or not channel:
         return jsonify({'error': 'recipient_email and channel_id required'}), 400
 
     invite = ProjectInvite(
@@ -1365,7 +1461,6 @@ def api_recovery_tickets():
         {
             'id': r.id,
             'case_ref': case_ref('REC', r.id),
-            'resolution_code': r.token,
             'status': r.status,
             'expires_at': r.expires_at.isoformat(),
         }

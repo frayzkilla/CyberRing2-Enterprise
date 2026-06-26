@@ -90,6 +90,7 @@
   <div class="card-header"><span class="card-title">Активация партнёрского доступа</span></div>
   <div class="card-body">
     <form method="POST" action="/invites/accept" class="access-form">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
       <div class="form-group">
         <label class="form-label">Код доступа</label>
         <input class="form-input" name="invite_code" required>

@@ -84,6 +84,7 @@
       <div class="card-header"><span class="card-title">Добавить заметку</span></div>
       <div class="card-body">
         <form class="access-form" method="POST" action="/project/{{ project.id }}/note">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
           <div class="form-group"><label class="form-label">Заголовок</label><input class="form-input" name="title"></div>
           <div class="form-group"><label class="form-label">Текст</label><textarea class="form-textarea" rows="3" name="body"></textarea></div>
           <button class="btn btn-secondary" type="submit">Добавить</button>
@@ -95,6 +96,7 @@
       <div class="card-header"><span class="card-title">Добавить файл</span></div>
       <div class="card-body">
         <form class="access-form" method="POST" action="/project/{{ project.id }}/file">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
           <div class="form-group"><label class="form-label">Имя файла</label><input class="form-input" name="filename" placeholder="flag.txt"></div>
           <div class="form-group"><label class="form-label">Содержимое</label><textarea class="form-textarea" rows="3" name="content"></textarea></div>
           <button class="btn btn-secondary" type="submit">Прикрепить</button>
@@ -106,6 +108,7 @@
       <div class="card-header"><span class="card-title">Партнёрское приглашение</span></div>
       <div class="card-body">
         <form class="access-form" method="POST" action="/project/{{ project.id }}/invite">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
           <div class="form-group"><label class="form-label">Email партнёра</label><input class="form-input" name="recipient_email" required></div>
           <div class="form-group">
             <label class="form-label">Канал</label>
@@ -147,6 +150,7 @@
       <div class="card-header"><span class="card-title">Активировать код приглашения</span></div>
       <div class="card-body">
         <form method="POST" action="/invites/accept" class="access-form">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
           <div class="form-group"><label class="form-label">Invite code</label><input class="form-input" name="invite_code" required></div>
           <div class="form-group">
             <label class="form-label">Режим синхронизации</label>

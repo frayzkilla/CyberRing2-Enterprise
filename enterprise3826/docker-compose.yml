@@ -4,7 +4,7 @@ services:
     container_name: cybernet-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-cybernet}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
@@ -24,13 +24,13 @@ services:
     environment:
       FLASK_APP: app.py
       FLASK_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-cybernet}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-cybernet}
       DB_HOST: postgres
       DB_PORT: "5432"
       DB_USER: ${POSTGRES_USER:-postgres}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      SECRET_KEY: ${SECRET_KEY:-cyber-secret-2077}
-      CHECKER_TOKEN: ${CHECKER_TOKEN:-flag-checker-2077}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      CHECKER_TOKEN: ${CHECKER_TOKEN:?CHECKER_TOKEN is required}
       MAX_FILE_SIZE: ${MAX_FILE_SIZE:-16777216}
       SERVER_PORT: "5050"
     ports:

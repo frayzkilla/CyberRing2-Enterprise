@@ -12,6 +12,7 @@
 <div class="card" style="max-width:860px">
   <div class="card-body">
     <form method="POST" class="access-form">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
       <div class="form-group">
         <label class="form-label">Название</label>
         <input class="form-input" name="title" required>
