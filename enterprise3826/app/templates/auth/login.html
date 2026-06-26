@@ -11,6 +11,7 @@
 <div class="card" style="max-width:620px">
   <div class="card-body">
     <form method="POST" class="access-form">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
       <div class="form-group">
         <label class="form-label">Логин</label>
         <input class="form-input" name="username" required>
